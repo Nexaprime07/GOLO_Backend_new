@@ -26,14 +26,16 @@ export class Ad {
   title: string;
 
   @Prop({ required: true })
-  description: string;mas
+  description: string; mas
 
-  @Prop({ required: true, enum: [
-    'Education', 'Matrimonial', 'Vehicle', 'Business', 'Travel',
-    'Astrology', 'Property', 'Public Notice', 'Lost & Found',
-    'Service', 'Personal', 'Employment', 'Pets', 'Mobiles',
-    'Electronics & Home appliances', 'Furniture', 'Other'
-  ]})
+  @Prop({
+    required: true, enum: [
+      'Education', 'Matrimonial', 'Vehicle', 'Business', 'Travel',
+      'Astrology', 'Property', 'Public Notice', 'Lost & Found',
+      'Service', 'Personal', 'Employment', 'Pets', 'Mobiles',
+      'Electronics & Home appliances', 'Furniture', 'Other'
+    ]
+  })
   category: string;
 
   @Prop({ required: true })
@@ -73,7 +75,7 @@ export class Ad {
     type: {
       type: String,
       enum: ['Point']
-      
+
     },
     coordinates: {
       type: [Number],
@@ -103,12 +105,12 @@ export class Ad {
   };
 
   @Prop({ type: MongooseSchema.Types.Mixed })
-  categorySpecificData: 
-    | Vehicle 
-    | Property 
-    | Service 
-    | Mobile 
-    | Electronics 
+  categorySpecificData:
+    | Vehicle
+    | Property
+    | Service
+    | Mobile
+    | Electronics
     | Furniture
     | Education
     | Pets
@@ -119,6 +121,25 @@ export class Ad {
     | Employment
     | LostFound
     | any;
+
+
+
+  // ==================== NEW FIELDS FROM FRONTEND ====================
+
+  @Prop({ type: [String], default: [] })
+  cities: string[];  // Multiple locations
+
+  @Prop({ default: 'english' })
+  language: string;  // MongoDB text index compatible (ISO 639-1 lowercase)
+
+  @Prop()
+  primaryContact: string;  // Primary contact from form
+
+  @Prop({ type: [Date], default: [] })
+  selectedDates: Date[];  // Selected dates for scheduling
+
+  @Prop({ default: 1 })
+  templateId: number;  // Template ID (1, 2, or 3)
 
   @Prop({ default: 'active', enum: ['active', 'expired', 'deleted', 'pending', 'rejected'] })
   status: string;

@@ -110,6 +110,31 @@ export class CreateAdDto {
   @Type(() => ContactInfoDto)
   contactInfo: ContactInfoDto;
 
+   // ==================== NEW FIELDS FROM FRONTEND ====================
+  
+  @IsOptional()
+  @IsString()
+  language?: string;  // From frontend language selector
+
+  @IsOptional()
+  @IsString()
+  primaryContact?: string;  // From frontend primary contact field
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  cities?: string[];  // Multiple locations from frontend
+
+  @IsOptional()
+  @IsArray()
+  @Type(() => Date)
+  selectedDates?: Date[];  // Selected dates from scheduling
+
+  @IsOptional()
+  @IsNumber()
+  templateId?: number;  // Template ID for UI (1, 2, or 3)
+
+
   // For Property category
   @IsOptional()
   @ValidateNested()

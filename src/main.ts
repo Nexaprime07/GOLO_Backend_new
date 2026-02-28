@@ -43,9 +43,17 @@ async function bootstrap() {
   // Start all microservices
   await app.startAllMicroservices();
   
+  // Enable CORS before listening
+  app.enableCors({
+    origin: ['https://choja.vercel.app', 'http://localhost:3000'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
   // Start HTTP server
   const port = configService.get('config.service.port');
-  await app.listen(process.env.PORT || 3000);
+  await app.listen(port);
   
   logger.log(`Ads microservice is running on port ${port}`);
   logger.log(`Kafka brokers: ${kafkaConfig.brokers.join(', ')}`);

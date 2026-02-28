@@ -5,33 +5,66 @@ export class VehicleDto {
   @IsEnum(['Rent', 'Sell'])
   type: string;
 
+  @IsOptional()
   @IsString()
-  brand: string;
+  vehicleType?: string;
 
+  @IsOptional()
   @IsString()
-  model: string;
+  brand?: string;
 
+  @IsOptional()
+  @IsString()
+  model?: string;
+
+  @IsOptional()
+  @IsString()
+  brandModel?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  rentAmount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  securityDeposit?: number;
+
+  @IsOptional()
+  @IsEnum(['Yes', 'No', 'Both'])
+  includesDriver?: string;
+
+  @IsOptional()
+  @IsString()
+  minRentalDuration?: string;
+
+  @IsOptional()
   @IsNumber()
   @Min(1900)
   @Max(new Date().getFullYear() + 1)
   @Type(() => Number)
-  year: number;
+  year?: number;
 
+  @IsOptional()
   @IsEnum(['Petrol', 'Diesel', 'Electric', 'Hybrid', 'CNG'])
-  fuelType: string;
+  fuelType?: string;
 
+  @IsOptional()
   @IsEnum(['Manual', 'Automatic'])
-  transmission: string;
+  transmission?: string;
 
+  @IsOptional()
   @IsNumber()
   @Min(0)
   @Type(() => Number)
-  kilometersDriven: number;
+  kilometersDriven?: number;
 
+  @IsOptional()
   @IsNumber()
   @Min(0)
   @Type(() => Number)
-  price: number;
+  price?: number;
 
   @IsOptional()
   @IsString()

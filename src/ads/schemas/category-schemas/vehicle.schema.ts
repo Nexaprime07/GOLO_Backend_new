@@ -8,26 +8,44 @@ export class Vehicle {
   @Prop({ required: true, enum: ['Rent', 'Sell'] })
   type: string;
 
-  @Prop({ required: true })
-  brand: string;
+  @Prop()
+  vehicleType?: string;
 
-  @Prop({ required: true })
-  model: string;
+  @Prop()
+  brand?: string;
 
-  @Prop({ required: true })
-  year: number;
+  @Prop()
+  model?: string;
 
-  @Prop({ required: true, enum: ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'CNG'] })
-  fuelType: string;
+  @Prop()
+  brandModel?: string;
 
-  @Prop({ required: true, enum: ['Manual', 'Automatic'] })
-  transmission: string;
+  @Prop()
+  rentAmount?: number;
 
-  @Prop({ required: true })
-  kilometersDriven: number;
+  @Prop()
+  securityDeposit?: number;
 
-  @Prop({ required: true })
-  price: number;
+  @Prop({ enum: ['Yes', 'No', 'Both'] })
+  includesDriver?: string;
+
+  @Prop()
+  minRentalDuration?: string;
+
+  @Prop()
+  year?: number;
+
+  @Prop({ enum: ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'CNG'] })
+  fuelType?: string;
+
+  @Prop({ enum: ['Manual', 'Automatic'] })
+  transmission?: string;
+
+  @Prop()
+  kilometersDriven?: number;
+
+  @Prop()
+  price?: number;
 
   @Prop()
   color: string;
