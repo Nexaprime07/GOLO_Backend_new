@@ -285,17 +285,19 @@ export class AdsService {
       .exec();
   }
 
-  async getTrendingSearches(limit = 10): Promise<any[]> {
-    // Return top ads by views as a proxy for trending searches
+  async getTrendingSearches(limit = 10): Promise<string[]> {
+    // Return top ad titles as trending searches
     const docs = await this.adModel
       .find({ status: 'active' })
       .sort({ views: -1 })
       .limit(limit)
-      .select('adId title views')
+      .select('title')
       .lean()
       .exec();
 
-    return docs;
+    // Extract just the titles and remove duplicates
+    const titles = [...new Set(docs.map(doc => doc.title).filter(Boolean))];
+    return titles.slice(0, limit);
   }
 
   async getRecommendedDeals(userId: string | undefined, limit = 10): Promise<Ad[]> {
@@ -320,17 +322,18 @@ export class AdsService {
     return this.adModel.find({ status: 'active' }).sort({ createdAt: -1 }).limit(limit).exec();
   }
 
-  async getPopularPlaces(limit = 10): Promise<any[]> {
-    // Aggregate top cities by ad count
+  async getPopularPlaces(limit = 10): Promise<string[]> {
+    // Aggregate top cities by ad count and return just city names
     const pipeline = [
       { $match: { status: 'active', city: { $exists: true, $ne: null } } },
       { $group: { _id: '$city', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: limit },
-      { $project: { city: '$_id', count: 1, _id: 0 } },
+      { $project: { _id: 1 } },
     ];
 
-    return (this.adModel as any).aggregate(pipeline).exec();
+    const results = await (this.adModel as any).aggregate(pipeline).exec();
+    return results.map(r => r._id).filter(Boolean);
   }
 
   async incrementViewCount(adId: string): Promise<void> {
