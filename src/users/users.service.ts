@@ -27,6 +27,8 @@ export class UsersService {
     // initialize twilio client if credentials provided
     const sid = this.configService.get('TWILIO_SID');
     const auth = this.configService.get('TWILIO_AUTH');
+    const phone = this.configService.get('TWILIO_PHONE');
+    this.logger.debug(`Twilio config sid=${!!sid} auth=${!!auth} phone=${!!phone}`);
     if (sid && auth) {
       this.twilioClient = twilio(sid, auth);
     } else {
