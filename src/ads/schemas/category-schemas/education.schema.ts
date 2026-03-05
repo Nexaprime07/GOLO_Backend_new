@@ -5,56 +5,68 @@ export type EducationDocument = Education & Document;
 
 @Schema({ _id: false, timestamps: false })
 export class Education {
-  @Prop({ required: true, enum: ['School', 'College', 'Coaching', 'Tutorial', 'Online Course'] })
-  institutionType: string;
-
-  @Prop({ required: true })
-  institutionName: string;
+  @Prop({ enum: ['School', 'College', 'Coaching', 'Tutorial', 'Online Course'] })
+  institutionType?: string;
 
   @Prop()
-  courseName: string;
+  institutionName?: string;
 
   @Prop()
-  duration: string;
+  courseName?: string;
 
   @Prop()
-  fees: number;
+  duration?: string;
 
   @Prop()
-  eligibility: string;
+  fees?: number;
 
   @Prop()
-  admissionStartDate: Date;
+  eligibility?: string;
 
   @Prop()
-  admissionEndDate: Date;
+  admissionStartDate?: Date;
+
+  @Prop()
+  admissionEndDate?: Date;
 
   @Prop({ type: [String] })
-  facilities: string[];
+  facilities?: string[];
 
   @Prop()
-  website: string;
+  website?: string;
 
   @Prop()
-  contactPerson: string;
+  contactPerson?: string;
 
   @Prop()
-  contactNumber: string;
+  contactNumber?: string;
 
   @Prop()
-  email: string;
+  email?: string;
 
   @Prop()
-  affiliatedTo: string;
+  affiliatedTo?: string;
 
   @Prop()
-  accreditation: string;
+  accreditation?: string;
 
   @Prop()
-  establishedYear: number;
+  establishedYear?: number;
 
   @Prop()
-  studentCapacity: number;
+  studentCapacity?: number;
+
+  @Prop()
+  mode?: string;
+
+  @Prop()
+  demo?: string;
+
+  @Prop()
+  experience?: string;
+
+  @Prop()
+  qualification?: string;
 }
 
 export const EducationSchema = SchemaFactory.createForClass(Education);

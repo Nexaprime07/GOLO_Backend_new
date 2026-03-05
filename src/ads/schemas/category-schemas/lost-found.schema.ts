@@ -5,44 +5,56 @@ export type LostFoundDocument = LostFound & Document;
 
 @Schema({ _id: false, timestamps: false })
 export class LostFound {
-  @Prop({ required: true, enum: ['Lost', 'Found'] })
-  type: string;
+  @Prop({ enum: ['Lost', 'Found'] })
+  type?: string;
 
-  @Prop({ required: true })
-  itemName: string;
-
-  @Prop()
-  category: string;
+  @Prop({ enum: ['Lost', 'Found'] })
+  status?: string;
 
   @Prop()
-  brand: string;
+  itemName?: string;
 
   @Prop()
-  color: string;
+  itemType?: string;
 
   @Prop()
-  distinctiveFeatures: string;
+  description?: string;
 
   @Prop()
-  lostFoundLocation: string;
+  location?: string;
 
   @Prop()
-  lostFoundDate: Date;
+  category?: string;
 
   @Prop()
-  reward: string;
+  brand?: string;
 
   @Prop()
-  contactName: string;
-
-  @Prop({ required: true })
-  contactNumber: string;
+  color?: string;
 
   @Prop()
-  email: string;
+  distinctiveFeatures?: string;
+
+  @Prop()
+  lostFoundLocation?: string;
+
+  @Prop()
+  lostFoundDate?: Date;
+
+  @Prop()
+  reward?: string;
+
+  @Prop()
+  contactName?: string;
+
+  @Prop()
+  contactNumber?: string;
+
+  @Prop()
+  email?: string;
 
   @Prop({ type: [String] })
-  images: string[];
+  images?: string[];
 }
 
 export const LostFoundSchema = SchemaFactory.createForClass(LostFound);

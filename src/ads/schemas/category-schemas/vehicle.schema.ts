@@ -5,8 +5,8 @@ export type VehicleDocument = Vehicle & Document;
 
 @Schema({ _id: false, timestamps: false })
 export class Vehicle {
-  @Prop({ required: true, enum: ['Rent', 'Sell'] })
-  type: string;
+  @Prop({ enum: ['Rent', 'Sell'] })
+  type?: string;
 
   @Prop()
   vehicleType?: string;
@@ -48,28 +48,34 @@ export class Vehicle {
   price?: number;
 
   @Prop()
-  color: string;
+  color?: string;
 
   @Prop()
-  insurance: string;
+  insurance?: string;
 
   @Prop()
-  registrationNumber: string;
+  registrationNumber?: string;
 
   @Prop()
-  ownerNumber: number;
+  rcAvailable?: string;
+
+  @Prop()
+  ownerNumber?: number;
+
+  @Prop()
+  ownership?: string;
 
   @Prop({ type: [String] })
-  features: string[];
+  features?: string[];
 
   @Prop()
-  condition: string;
+  condition?: string;
 
   @Prop()
-  emiAvailable: boolean;
+  emiAvailable?: boolean;
 
   @Prop()
-  exchangeAvailable: boolean;
+  exchangeAvailable?: boolean;
 }
 
 export const VehicleSchema = SchemaFactory.createForClass(Vehicle);

@@ -5,56 +5,68 @@ export type PetsDocument = Pets & Document;
 
 @Schema({ _id: false, timestamps: false })
 export class Pets {
-  @Prop({ required: true, enum: ['Dog', 'Cat', 'Bird', 'Fish', 'Rabbit', 'Hamster', 'Other'] })
-  petType: string;
+  @Prop({ enum: ['Dog', 'Cat', 'Bird', 'Fish', 'Rabbit', 'Hamster', 'Other'] })
+  petType?: string;
 
   @Prop()
-  breed: string;
+  species?: string;
 
   @Prop()
-  age: number;
+  breed?: string;
 
   @Prop()
-  ageUnit: string;
+  age?: number | string;
 
   @Prop()
-  gender: string;
+  ageUnit?: string;
 
   @Prop()
-  color: string;
+  gender?: string;
 
   @Prop()
-  size: string;
+  weight?: string;
 
   @Prop()
-  vaccinated: boolean;
+  color?: string;
 
   @Prop()
-  dewormed: boolean;
+  size?: string;
 
   @Prop()
-  microchipped: boolean;
+  vaccinated?: boolean;
 
   @Prop()
-  neutered: boolean;
+  dewormed?: boolean;
 
   @Prop()
-  healthCertificate: boolean;
+  microchipped?: boolean;
 
   @Prop()
-  trained: boolean;
+  neutered?: boolean;
 
   @Prop()
-  price: number;
+  healthCertificate?: boolean;
 
   @Prop()
-  purpose: string;
+  trained?: boolean;
 
   @Prop()
-  pedigree: boolean;
+  price?: number;
+
+  @Prop()
+  purpose?: string;
+
+  @Prop()
+  pedigree?: boolean;
 
   @Prop({ type: [String] })
-  images: string[];
+  images?: string[];
+
+  @Prop({ type: [String] })
+  temperament?: string[];
+
+  @Prop()
+  specialDiet?: string;
 }
 
 export const PetsSchema = SchemaFactory.createForClass(Pets);

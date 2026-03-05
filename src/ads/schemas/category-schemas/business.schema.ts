@@ -5,56 +5,62 @@ export type BusinessDocument = Business & Document;
 
 @Schema({ _id: false, timestamps: false })
 export class Business {
-  @Prop({ required: true, enum: ['Promotion', 'Partnership', 'Investment', 'Sale', 'Franchise'] })
-  type: string;
-
-  @Prop({ required: true })
-  businessName: string;
+  @Prop({ enum: ['Promotion', 'Partnership', 'Investment', 'Sale', 'Franchise'] })
+  type?: string;
 
   @Prop()
-  businessType: string;
+  businessName?: string;
 
   @Prop()
-  establishedYear: number;
+  businessType?: string;
 
   @Prop()
-  description: string;
+  validTillDate?: Date;
+
+  @Prop({ type: [{ platform: String, url: String }] })
+  socialMedia?: Array<{ platform: string; url: string }>;
 
   @Prop()
-  location: string;
+  establishedYear?: number;
 
   @Prop()
-  investment: number;
+  description?: string;
 
   @Prop()
-  expectedReturn: string;
+  location?: string;
 
   @Prop()
-  employees: number;
+  investment?: number;
 
   @Prop()
-  turnover: string;
+  expectedReturn?: string;
 
   @Prop()
-  profitMargin: string;
+  employees?: number;
 
   @Prop()
-  website: string;
+  turnover?: string;
 
   @Prop()
-  contactPerson: string;
+  profitMargin?: string;
 
   @Prop()
-  contactNumber: string;
+  website?: string;
 
   @Prop()
-  email: string;
+  contactPerson?: string;
+
+  @Prop()
+  contactNumber?: string;
+
+  @Prop()
+  email?: string;
 
   @Prop({ type: [String] })
-  images: string[];
+  images?: string[];
 
   @Prop()
-  documents: string;
+  documents?: string;
 }
 
 export const BusinessSchema = SchemaFactory.createForClass(Business);

@@ -14,24 +14,8 @@ import {
   IsObject
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { VehicleDto } from './category-dtos/vehicle.dto';
-import { PropertyDto } from './category-dtos/property.dto';
-import { ServiceDto } from './category-dtos/service.dto';
-import { MobileDto } from './category-dtos/mobiles.dto';
-import { ElectronicsDto } from './category-dtos/electronics.dto';
-import { FurnitureDto } from './category-dtos/furniture.dto';
-import { EducationDto } from './category-dtos/education.dto';
-import { PetsDto } from './category-dtos/pets.dto';
-import { MatrimonialDto } from './category-dtos/matrimonial.dto';
-import { BusinessDto } from './category-dtos/business.dto';
-import { TravelDto } from './category-dtos/travel.dto';
-import { AstrologyDto } from './category-dtos/astrology.dto';
-import { EmploymentDto } from './category-dtos/employment.dto';
-import { LostFoundDto } from './category-dtos/lost-found.dto';
-import { PersonalDto } from './category-dtos/personal.dto';
 import { ContactInfoDto } from './contact-info.dto';
 import { MetadataDto } from './metadata.dto';
-import { Prop } from '@nestjs/mongoose';
 
 export class CreateAdDto {
   @IsString()
@@ -137,93 +121,78 @@ export class CreateAdDto {
 
   // For Property category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => PropertyDto)
-  propertyData?: PropertyDto;
+  @IsObject()
+  propertyData?: Record<string, any>;
 
   // For Vehicle category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => VehicleDto)
-  vehicleData?: VehicleDto;
+  @IsObject()
+  vehicleData?: Record<string, any>;
 
   // For Service category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => ServiceDto)
-  serviceData?: ServiceDto;
+  @IsObject()
+  serviceData?: Record<string, any>;
 
   // For Mobile category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => MobileDto)
-  mobileData?: MobileDto;
+  @IsObject()
+  mobileData?: Record<string, any>;
 
   // For Electronics category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => ElectronicsDto)
-  electronicsData?: ElectronicsDto;
+  @IsObject()
+  electronicsData?: Record<string, any>;
 
   // For Furniture category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => FurnitureDto)
-  furnitureData?: FurnitureDto;
+  @IsObject()
+  furnitureData?: Record<string, any>;
 
   // For Education category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => EducationDto)
-  educationData?: EducationDto;
+  @IsObject()
+  educationData?: Record<string, any>;
 
   // For Pets category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => PetsDto)
-  petsData?: PetsDto;
+  @IsObject()
+  petsData?: Record<string, any>;
 
   // For Matrimonial category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => MatrimonialDto)
-  matrimonialData?: MatrimonialDto;
+  @IsObject()
+  matrimonialData?: Record<string, any>;
 
   // For Business category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => BusinessDto)
-  businessData?: BusinessDto;
+  @IsObject()
+  businessData?: Record<string, any>;
 
   // For Travel category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => TravelDto)
-  travelData?: TravelDto;
+  @IsObject()
+  travelData?: Record<string, any>;
 
   // For Astrology category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => AstrologyDto)
-  astrologyData?: AstrologyDto;
+  @IsObject()
+  astrologyData?: Record<string, any>;
 
   // For Employment category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => EmploymentDto)
-  employmentData?: EmploymentDto;
+  @IsObject()
+  employmentData?: Record<string, any>;
 
   // For Lost & Found category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => LostFoundDto)
-  lostFoundData?: LostFoundDto;
+  @IsObject()
+  lostFoundData?: Record<string, any>;
 
   // For Personal category
   @IsOptional()
-  @ValidateNested()
-  @Type(() => PersonalDto)
-  personalData?: PersonalDto;
+  @IsObject()
+  personalData?: Record<string, any>;
 
   // For Public Notice category
   @IsOptional()

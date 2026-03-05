@@ -5,47 +5,47 @@ export type AstrologyDocument = Astrology & Document;
 
 @Schema({ _id: false, timestamps: false })
 export class Astrology {
-  @Prop({ required: true, enum: ['Consultation', 'Horoscope', 'Puja', 'Remedies'] })
-  serviceType: string;
+  @Prop({ enum: ['Consultation', 'Horoscope', 'Puja', 'Remedies'] })
+  serviceType?: string;
 
   @Prop()
-  astrologerName: string;
+  astrologerName?: string;
 
   @Prop()
-  experience: number;
+  experience?: number;
 
   @Prop()
-  specialization: string;
+  specialization?: string;
 
   @Prop()
-  languages: string[];
+  languages?: string[];
 
   @Prop()
-  consultationMode: string;
+  consultationMode?: string;
 
   @Prop()
-  charges: number;
+  charges?: number;
 
   @Prop()
-  duration: string;
+  duration?: string;
 
   @Prop()
-  availableTimings: string;
+  availableTimings?: string;
 
   @Prop()
-  qualification: string;
+  qualification?: string;
 
   @Prop()
-  contactNumber: string;
+  contactNumber?: string;
 
   @Prop()
-  email: string;
+  email?: string;
 
   @Prop()
-  website: string;
+  website?: string;
 
   @Prop()
-  about: string;
+  about?: string;
 }
 
 export const AstrologySchema = SchemaFactory.createForClass(Astrology);

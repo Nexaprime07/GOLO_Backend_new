@@ -5,68 +5,83 @@ export type ServiceDocument = Service & Document;
 
 @Schema({ _id: false, timestamps: false })
 export class Service {
-  @Prop({ required: true, enum: [
+  @Prop({ enum: [
     'Plumber', 'Electrician', 'Carpenter', 'Painter', 'Cleaner',
     'AC Repair', 'Appliance Repair', 'Pest Control', 'Packers Movers',
     'Beauty Parlor', 'Salon at Home', 'Spa', 'Photographer',
     'Event Planner', 'Tutor', 'Driver', 'Security Guard',
     'Web Developer', 'Designer', 'Catering', 'Other'
   ]})
-  serviceType: string;
+  serviceType?: string;
+
+  @Prop()
+  serviceCategory?: string;
 
   @Prop({ required: true })
-  experience: number;
+  experience?: number | string;
 
   @Prop()
-  qualification: string;
+  charges?: number | string;
 
   @Prop()
-  specialization: string;
+  qualification?: string;
 
   @Prop()
-  hourlyRate: number;
+  specialization?: string;
 
   @Prop()
-  dailyRate: number;
+  hourlyRate?: number;
 
   @Prop()
-  projectRate: number;
+  dailyRate?: number;
+
+  @Prop()
+  projectRate?: number;
 
   @Prop({ type: [String] })
-  availableDays: string[];
+  availableDays?: string[];
 
   @Prop()
-  availableTimeFrom: string;
+  availableTimeFrom?: string;
 
   @Prop()
-  availableTimeTo: string;
+  availableTimeTo?: string;
 
   @Prop()
-  emergencyService: boolean;
+  availableTime?: string;
 
   @Prop()
-  emergencyCharge: number;
+  emergencyService?: boolean;
+
+  @Prop()
+  emergencyCharge?: number;
 
   @Prop({ type: [String] })
-  serviceArea: string[];
+  serviceArea?: string[] | string;
 
   @Prop()
-  serviceRadius: number;
+  serviceRadius?: number;
 
   @Prop()
-  licenseNumber: string;
+  licenseNumber?: string;
 
   @Prop()
-  insured: boolean;
+  insured?: boolean;
 
   @Prop()
-  professionalTools: boolean;
+  professionalTools?: boolean;
 
   @Prop()
-  teamSize: number;
+  teamSize?: number;
 
   @Prop()
-  languages: string[];
+  languages?: string[];
+
+  @Prop()
+  bio?: string;
+
+  @Prop()
+  available24x7?: boolean;
 }
 
 export const ServiceSchema = SchemaFactory.createForClass(Service);

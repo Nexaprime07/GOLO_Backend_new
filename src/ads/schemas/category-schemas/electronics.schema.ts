@@ -5,54 +5,60 @@ export type ElectronicsDocument = Electronics & Document;
 
 @Schema({ _id: false, timestamps: false })
 export class Electronics {
-  @Prop({ required: true, enum: [
+  @Prop({ enum: [
     'TV', 'Refrigerator', 'Washing Machine', 'Microwave', 'Air Conditioner',
     'Laptop', 'Desktop', 'Tablet', 'Camera', 'Speaker', 'Headphones',
     'Gaming Console', 'Printer', 'Router', 'Smart Watch', 'Other'
   ]})
-  productType: string;
-
-  @Prop({ required: true })
-  brand: string;
-
-  @Prop({ required: true })
-  model: string;
+  productType?: string;
 
   @Prop()
-  yearOfPurchase: number;
+  applianceType?: string;
 
   @Prop()
-  condition: string;
+  brand?: string;
+
+  @Prop()
+  model?: string;
+
+  @Prop()
+  yearOfPurchase?: number;
+
+  @Prop()
+  condition?: string;
 
   @Prop({ type: Map, of: String })
-  specifications: Map<string, string>;
+  specifications?: Map<string, string>;
 
   @Prop()
-  warranty: string;
+  warranty?: string;
 
   @Prop()
-  warrantyExpiry: Date;
+  warrantyExpiry?: Date;
 
   @Prop({ type: [String] })
-  accessories: string[];
-
-  @Prop({ required: true })
-  price: number;
+  accessories?: string[];
 
   @Prop()
-  originalPrice: number;
+  price?: number;
 
   @Prop()
-  negotiable: boolean;
+  originalPrice?: number;
 
   @Prop()
-  billAvailable: boolean;
+  negotiable?: boolean;
 
   @Prop()
-  boxAvailable: boolean;
+  billAvailable?: boolean;
 
   @Prop()
-  powerSupply: string;
+  boxAvailable?: boolean;
+
+  @Prop()
+  powerSupply?: string;
+
+  @Prop()
+  capacity?: string;
 }
 
 export const ElectronicsSchema = SchemaFactory.createForClass(Electronics);

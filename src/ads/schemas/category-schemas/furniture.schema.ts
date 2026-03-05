@@ -5,53 +5,53 @@ export type FurnitureDocument = Furniture & Document;
 
 @Schema({ _id: false, timestamps: false })
 export class Furniture {
-  @Prop({ required: true, enum: [
+  @Prop({ enum: [
     'Sofa', 'Bed', 'Dining Table', 'Chair', 'Table', 'Wardrobe',
     'Dressing Table', 'Bookshelf', 'Cabinet', 'Mattress', 'Other'
   ]})
-  furnitureType: string;
-
-  @Prop({ required: true })
-  material: string;
+  furnitureType?: string;
 
   @Prop()
-  color: string;
+  material?: string;
 
   @Prop()
-  dimensions: string;
+  color?: string;
 
   @Prop()
-  weight: number;
+  dimensions?: string;
 
   @Prop()
-  condition: string;
+  weight?: number;
 
   @Prop()
-  assemblyRequired: boolean;
+  condition?: string;
 
   @Prop()
-  style: string;
+  assemblyRequired?: boolean;
 
   @Prop()
-  brand: string;
+  style?: string;
 
   @Prop()
-  yearOfPurchase: number;
-
-  @Prop({ required: true })
-  price: number;
+  brand?: string;
 
   @Prop()
-  originalPrice: number;
+  yearOfPurchase?: number;
 
   @Prop()
-  negotiable: boolean;
+  price?: number;
 
   @Prop()
-  deliveryAvailable: boolean;
+  originalPrice?: number;
 
   @Prop()
-  deliveryCharges: number;
+  negotiable?: boolean;
+
+  @Prop()
+  deliveryAvailable?: boolean;
+
+  @Prop()
+  deliveryCharges?: number;
 }
 
 export const FurnitureSchema = SchemaFactory.createForClass(Furniture);

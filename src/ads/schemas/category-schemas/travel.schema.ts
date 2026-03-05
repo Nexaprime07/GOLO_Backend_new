@@ -5,59 +5,62 @@ export type TravelDocument = Travel & Document;
 
 @Schema({ _id: false, timestamps: false })
 export class Travel {
-  @Prop({ required: true, enum: ['Package', 'Guide', 'Transport', 'Accommodation', 'Trip'] })
-  type: string;
-
-  @Prop({ required: true })
-  destination: string;
+  @Prop({ enum: ['Package', 'Guide', 'Transport', 'Accommodation', 'Trip'] })
+  type?: string;
 
   @Prop()
-  duration: string;
+  destination?: string;
 
   @Prop()
-  startDate: Date;
+  travelDate?: Date;
 
   @Prop()
-  endDate: Date;
+  duration?: string;
 
   @Prop()
-  price: number;
+  startDate?: Date;
 
   @Prop()
-  inclusions: string;
+  endDate?: Date;
 
   @Prop()
-  exclusions: string;
+  price?: number;
 
   @Prop()
-  itinerary: string;
+  inclusions?: string;
 
   @Prop()
-  groupSize: number;
+  exclusions?: string;
 
   @Prop()
-  accommodation: string;
+  itinerary?: string;
 
   @Prop()
-  mealsIncluded: boolean;
+  groupSize?: number;
 
   @Prop()
-  transportation: string;
+  accommodation?: string;
 
   @Prop()
-  guideIncluded: boolean;
+  mealsIncluded?: boolean;
 
   @Prop()
-  activities: string[];
+  transportation?: string;
 
   @Prop()
-  contactNumber: string;
+  guideIncluded?: boolean;
 
   @Prop()
-  email: string;
+  activities?: string[];
 
   @Prop()
-  website: string;
+  contactNumber?: string;
+
+  @Prop()
+  email?: string;
+
+  @Prop()
+  website?: string;
 }
 
 export const TravelSchema = SchemaFactory.createForClass(Travel);

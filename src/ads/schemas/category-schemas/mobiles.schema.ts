@@ -5,71 +5,74 @@ export type MobileDocument = Mobile & Document;
 
 @Schema({ _id: false, timestamps: false })
 export class Mobile {
-  @Prop({ required: true })
-  brand: string;
-
-  @Prop({ required: true })
-  model: string;
-
-  @Prop({ required: true })
-  storage: string;
-
-  @Prop({ required: true })
-  ram: string;
-
-  @Prop({ required: true })
-  color: string;
-
-  @Prop({ required: true, enum: ['New', 'Like New', 'Good', 'Fair', 'Broken'] })
-  condition: string;
+  @Prop()
+  brand?: string;
 
   @Prop()
-  batteryHealth: string;
+  model?: string;
 
   @Prop()
-  screenSize: string;
+  storage?: string;
 
   @Prop()
-  processor: string;
+  ram?: string;
 
   @Prop()
-  rearCamera: string;
+  color?: string;
+
+  @Prop({ enum: ['New', 'Like New', 'Good', 'Fair', 'Broken'] })
+  condition?: string;
 
   @Prop()
-  frontCamera: string;
+  batteryHealth?: string;
 
   @Prop()
-  warranty: string;
+  screenSize?: string;
 
   @Prop()
-  warrantyExpiry: Date;
+  processor?: string;
 
   @Prop()
-  boxIncluded: boolean;
+  rearCamera?: string;
+
+  @Prop()
+  frontCamera?: string;
+
+  @Prop()
+  warranty?: string;
+
+  @Prop()
+  warrantyExpiry?: Date;
+
+  @Prop()
+  boxIncluded?: boolean;
 
   @Prop({ type: [String] })
-  accessories: string[];
-
-  @Prop({ required: true })
-  price: number;
+  accessories?: string[];
 
   @Prop()
-  originalPrice: number;
+  price?: number;
 
   @Prop()
-  imeiNumber: string;
+  originalPrice?: number;
 
   @Prop()
-  dualSim: boolean;
+  imeiNumber?: string;
 
   @Prop()
-  hashas5G: boolean;
+  dualSim?: boolean;
 
   @Prop()
-  waterResistant: boolean;
+  hashas5G?: boolean;
 
   @Prop()
-  fastCharging: boolean;
+  waterResistant?: boolean;
+
+  @Prop()
+  fastCharging?: boolean;
+
+  @Prop()
+  negotiable?: boolean;
 }
 
 export const MobileSchema = SchemaFactory.createForClass(Mobile);

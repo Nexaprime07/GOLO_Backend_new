@@ -5,62 +5,71 @@ export type PropertyDocument = Property & Document;
 
 @Schema({ _id: false, timestamps: false })
 export class Property {
-  @Prop({ required: true, enum: ['Rent', 'Sell'] })
-  type: string;
+  @Prop({ enum: ['Rent', 'Sell'] })
+  type?: string;
 
-  @Prop({ required: true, enum: ['Apartment', 'House', 'Villa', 'Commercial', 'Land', 'Office'] })
-  propertyType: string;
+  @Prop({ enum: ['Rent', 'Sell'] })
+  listingType?: string;
+
+  @Prop({ enum: ['Apartment', 'House', 'Villa', 'Commercial', 'Land', 'Office'] })
+  propertyType?: string;
+
+  @Prop()
+  rent?: number;
+
+  @Prop()
+  bhk?: string;
 
   @Prop({ required: true })
-  area: number;
+  area?: number;
 
   @Prop({ required: true })
-  areaUnit: string;
+  areaUnit?: string;
 
   @Prop()
-  bedrooms: number;
+  bedrooms?: number;
 
   @Prop()
-  bathrooms: number;
+  bathrooms?: number;
 
   @Prop()
-  balconies: number;
+  balconies?: number;
 
   @Prop()
-  furnishing: string;
-
-  @Prop({ required: true })
-  price: number;
+  furnishing?: string;
 
   @Prop()
-  maintenanceCharges: number;
+  price?: number;
 
   @Prop()
-  floorNumber: number;
+  maintenanceCharges?: number;
 
   @Prop()
-  totalFloors: number;
+  floorNumber?: number;
 
   @Prop()
-  facing: string;
+  totalFloors?: number;
 
   @Prop()
-  parking: string;
+  facing?: string;
+
+  @Prop()
+  parking?: string;
 
   @Prop({ type: [String] })
-  amenities: string[];
+  amenities?: string[];
 
   @Prop()
-  possessionDate: Date;
+  possessionDate?: Date;
 
   @Prop()
-  ageOfProperty: number;
+  ageOfProperty?: number;
 
   @Prop()
-  gatedCommunity: boolean;
+  gatedCommunity?: boolean;
 
   @Prop()
-  powerBackup: boolean;
+  powerBackup?: boolean;
 }
 
 export const PropertySchema = SchemaFactory.createForClass(Property);
