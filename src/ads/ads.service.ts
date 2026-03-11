@@ -379,12 +379,16 @@ export class AdsService {
   ============================================================ */
 
   /**
-   * Track a view — views always equals viewHistory.length (unique visitors only).
-   * Refreshing the page never increments views for the same visitor.
-   * visitorId: userId (authenticated) or a browser-generated UUID from localStorage.
+   * Track a view for authenticated users only — views always equals viewHistory.length.
+   * visitorId should be userId from JWT token (no anonymous tracking).
    */
-  async trackViewWithVisitor(adId: string, visitorId: string): Promise<void> {
+  async trackViewWithVisitor(adId: string, userId: string): Promise<void> {
     try {
+      if (!userId) {
+        this.logger.warn(`trackViewWithVisitor: No userId provided for ad ${adId}`);
+        return;
+      }
+
       // Resolve to UUID adId if a MongoDB _id was passed
       let resolvedAdId = adId;
       if (/^[0-9a-fA-F]{24}$/.test(adId)) {
@@ -392,8 +396,7 @@ export class AdsService {
         if (found?.adId) resolvedAdId = found.adId;
       }
 
-      // Add visitorId to viewHistory (no-op if already present due to $addToSet)
-      // Then set views = viewHistory.length to keep them perfectly in sync
+      // Add userId to viewHistory and sync views = viewHistory.length atomically
       const updated = await this.adModel.findOneAndUpdate(
         { adId: resolvedAdId },
         [
@@ -401,9 +404,9 @@ export class AdsService {
             $set: {
               viewHistory: {
                 $cond: {
-                  if: { $in: [visitorId, { $ifNull: ['$viewHistory', []] }] },
+                  if: { $in: [userId, { $ifNull: ['$viewHistory', []] }] },
                   then: '$viewHistory',
-                  else: { $concatArrays: [{ $ifNull: ['$viewHistory', []] }, [visitorId]] },
+                  else: { $concatArrays: [{ $ifNull: ['$viewHistory', []] }, [userId]] },
                 },
               },
               updatedAt: new Date(),
@@ -422,7 +425,7 @@ export class AdsService {
         this.logger.warn(`trackViewWithVisitor: ad not found for adId=${resolvedAdId}`);
       }
     } catch (error: any) {
-      this.logger.error(`Failed to track view with visitor for ${adId}: ${error.message}`);
+      this.logger.error(`Failed to track view for user ${userId} on ad ${adId}: ${error.message}`);
     }
   }
 

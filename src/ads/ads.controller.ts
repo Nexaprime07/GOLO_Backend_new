@@ -958,14 +958,14 @@ async testKafka() {
   }
 
   @Get('ad-details/:adId')
-  async getAdDetails(@Param('adId') adId: string, @Query('vid') visitorId?: string) {
+  async getAdDetails(@Param('adId') adId: string, @CurrentUser() user?: any) {
     this.logger.log(`Fetching ad details for: ${adId}`);
     try {
       const ad = await this.adsService.getAdById(adId);
 
-      // Track unique view — only counts if visitorId is new
-      if (visitorId) {
-        this.adsService.trackViewWithVisitor(adId, visitorId).catch(e =>
+      // Track view ONLY if user is authenticated
+      if (user?.id) {
+        this.adsService.trackViewWithVisitor(adId, user.id).catch(e =>
           this.logger.error(`Error tracking view: ${e.message}`)
         );
       }
@@ -1011,15 +1011,15 @@ async testKafka() {
    * Keep this dynamic GET route near the bottom so static routes always win.
    */
   @Get(':adId')
-  async getAdById(@Param('adId') adId: string, @Query('vid') visitorId?: string) {
+  async getAdById(@Param('adId') adId: string, @CurrentUser() user?: any) {
     this.logger.log(`REST: Getting ad by ID: ${adId}`);
 
     try {
       const ad = await this.adsService.getAdById(adId);
 
-      // Track unique view — only counts if visitorId is new
-      if (visitorId) {
-        this.adsService.trackViewWithVisitor(adId, visitorId).catch(error => {
+      // Track view ONLY if user is authenticated
+      if (user?.id) {
+        this.adsService.trackViewWithVisitor(adId, user.id).catch(error => {
           this.logger.error(`Error tracking view: ${error.message}`);
         });
       }
