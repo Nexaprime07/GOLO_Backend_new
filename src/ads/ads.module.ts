@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AdsService } from './ads.service';
 import { AdsController } from './ads.controller';
 import { Ad, AdSchema } from './schemas/category-schemas/ad.schema';
@@ -18,6 +19,7 @@ import { KafkaModule } from '../kafka/kafka.module';
     // 🔴 CRITICAL: Register User model HERE
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
 
+    EventEmitterModule.forRoot(),
     forwardRef(() => KafkaModule),
   ],
   controllers: [AdsController],

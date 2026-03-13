@@ -550,10 +550,24 @@ export class UsersService {
       .limit(5)
       .exec();
 
+    // Fetch ads-related stats if AdsService is available
+    let pendingReports = 0;
+    let totalAds = 0;
+    if (this.adsService) {
+      try {
+        pendingReports = await this.adsService.getPendingReportsCount();
+        totalAds = await this.adsService.getTotalAdsCount();
+      } catch (error) {
+        this.logger.warn(`Failed to fetch ads stats: ${error.message}`);
+      }
+    }
+
     return {
       totalUsers,
       totalAdmins,
       totalRegularUsers,
+      pendingReports,
+      totalAds,
       recentUsers: recentUsers.map(u => this.toResponseDto(u)),
     };
   }

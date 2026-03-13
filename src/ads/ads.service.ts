@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, SortOrder } from 'mongoose';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Ad, AdDocument } from './schemas/category-schemas/ad.schema';
 import { CreateAdDto } from './dto/create-ad.dto';
 import { UpdateAdDto } from './dto/update-ad.dto';
@@ -42,6 +43,7 @@ export class AdsService implements OnModuleInit, OnModuleDestroy {
     private readonly auditLogsService: AuditLogsService,
     private configService: ConfigService,
     public redisService: RedisService, // Make public for controller access
+    private eventEmitter: EventEmitter2,
 
     // ✅ Kafka OPTIONAL
     @Optional() private readonly kafkaService?: KafkaService,
@@ -1062,6 +1064,16 @@ export class AdsService implements OnModuleInit, OnModuleDestroy {
         });
       }
 
+      // Emit event for WebSocket notification
+      this.eventEmitter.emit('report.submitted', {
+        reportId: report.reportId,
+        adId: resolvedAdId,
+        reportedBy: userId,
+        reason,
+        reportCount: updatedAd?.reportCount,
+        timestamp: new Date().toISOString(),
+      });
+
       // Send email notification to admin
       if (this.emailEnabled && this.emailTransporter) {
         try {
@@ -1160,15 +1172,24 @@ export class AdsService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Get pending reports queue (admin only)
+   * Get all reports queue (admin only) - shows all reports regardless of status
    */
-  async getPendingReports(): Promise<any[]> {
+  async getAllReports(): Promise<any[]> {
     try {
-      this.logger.log('Fetching pending reports queue');
+      this.logger.log('🔍 Fetching all reports queue from database');
+
+      // First, check if any reports exist
+      const totalCount = await this.reportModel.countDocuments().exec();
+      this.logger.log(`📊 Total reports in database: ${totalCount}`);
+
+      if (totalCount === 0) {
+        this.logger.warn('⚠️ No reports found in database');
+        return [];
+      }
 
       const reports = await this.reportModel.aggregate([
         {
-          $match: { status: ReportStatus.PENDING },
+          $match: {}, // Match ALL reports (no status filter)
         },
         {
           $lookup: {
@@ -1179,7 +1200,10 @@ export class AdsService implements OnModuleInit, OnModuleDestroy {
           },
         },
         {
-          $unwind: '$ad',
+          $unwind: {
+            path: '$ad',
+            preserveNullAndEmptyArrays: true, // Keep reports even if ad is deleted
+          },
         },
         {
           $project: {
@@ -1188,7 +1212,10 @@ export class AdsService implements OnModuleInit, OnModuleDestroy {
             reportedBy: 1,
             reason: 1,
             description: 1,
+            status: 1,
+            adminNotes: 1,
             createdAt: 1,
+            reviewedAt: 1,
             'ad.title': 1,
             'ad.status': 1,
             'ad.reportCount': 1,
@@ -1199,9 +1226,10 @@ export class AdsService implements OnModuleInit, OnModuleDestroy {
         },
       ]);
 
+      this.logger.log(`✅ Successfully fetched ${reports.length} reports with ad details`);
       return reports;
     } catch (error: any) {
-      this.logger.error(`Error fetching pending reports: ${error.message}`);
+      this.logger.error(`❌ Error fetching reports: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -1434,6 +1462,18 @@ export class AdsService implements OnModuleInit, OnModuleDestroy {
         </body>
       </html>
     `;
+  }
+
+  /* ============================================================
+     ADMIN COUNT HELPERS (used by UsersService.adminGetStats)
+  ============================================================ */
+
+  async getPendingReportsCount(): Promise<number> {
+    return this.reportModel.countDocuments({ status: ReportStatus.PENDING });
+  }
+
+  async getTotalAdsCount(): Promise<number> {
+    return this.adModel.countDocuments();
   }
 
   /* ============================================================

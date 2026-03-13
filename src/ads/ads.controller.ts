@@ -1134,6 +1134,65 @@ async testKafka() {
     }
   }
 
+  // ==================== REPORTING & MODERATION ROUTES (MUST BE BEFORE :adId) ====================
+
+  /**
+   * Get all reports queue (admin only) - shows ALL reports regardless of status
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get('reports')
+  async getAllReports() {
+    this.logger.log('Admin fetching all reports queue');
+
+    try {
+      const reports = await this.adsService.getAllReports();
+      
+      this.logger.log(`✅ Successfully fetched ${reports.length} reports`);
+
+      return {
+        success: true,
+        data: reports,
+        count: reports.length,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error: any) {
+      this.logger.error(`❌ Error fetching reports: ${error.message}`, error.stack);
+      return {
+        success: false,
+        message: 'Failed to fetch reports',
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      };
+    }
+  }
+
+  /**
+   * Get reports for a specific ad (admin only)
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get('reports/:adId')
+  async getAdReports(@Param('adId') adId: string) {
+    this.logger.log(`Admin fetching reports for ad: ${adId}`);
+
+    try {
+      const reports = await this.adsService.getAdReports(adId);
+      return {
+        success: true,
+        data: reports,
+        count: reports.length,
+      };
+    } catch (error: any) {
+      this.logger.error(`Error fetching reports: ${error.message}`);
+      return {
+        success: false,
+        message: 'Failed to fetch reports',
+        error: error.message,
+      };
+    }
+  }
+
   /**
    * Keep this dynamic GET route near the bottom so static routes always win.
    */
@@ -1206,58 +1265,6 @@ async testKafka() {
         success: false,
         message: error.message || 'Failed to submit report',
         statusCode: error.getStatus ? error.getStatus() : 400,
-      };
-    }
-  }
-
-  /**
-   * Get all reports for a specific ad (admin only)
-   */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @Get('reports/:adId')
-  async getAdReports(@Param('adId') adId: string) {
-    this.logger.log(`Admin fetching reports for ad: ${adId}`);
-
-    try {
-      const reports = await this.adsService.getAdReports(adId);
-      return {
-        success: true,
-        data: reports,
-        count: reports.length,
-      };
-    } catch (error: any) {
-      this.logger.error(`Error fetching reports: ${error.message}`);
-      return {
-        success: false,
-        message: 'Failed to fetch reports',
-        error: error.message,
-      };
-    }
-  }
-
-  /**
-   * Get pending reports queue (admin only)
-   */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @Get('reports/pending')
-  async getPendingReports() {
-    this.logger.log('Admin fetching pending reports queue');
-
-    try {
-      const reports = await this.adsService.getPendingReports();
-      return {
-        success: true,
-        data: reports,
-        count: reports.length,
-      };
-    } catch (error: any) {
-      this.logger.error(`Error fetching pending reports: ${error.message}`);
-      return {
-        success: false,
-        message: 'Failed to fetch pending reports',
-        error: error.message,
       };
     }
   }

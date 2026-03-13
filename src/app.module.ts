@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ChatsModule } from './chats/chats.module';
 import { CallsModule } from './calls/calls.module';
+import { ReportsModule } from './reports/reports.module';
 import { RedisModule } from './common/services/redis.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { AppController } from './app.controller';
@@ -53,6 +54,7 @@ const logger = new Logger('MongoDB');
     PaymentsModule,
     ChatsModule,
     CallsModule,
+    ReportsModule,
     AuditLogsModule,
   ],
   controllers: [AppController],
