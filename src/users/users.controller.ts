@@ -154,6 +154,33 @@ export class UsersController {
     };
   }
 
+  // ==================== NOTIFICATION ROUTES ====================
+
+  @Get('notifications')
+  @UseGuards(JwtAuthGuard)
+  async getNotifications(
+    @CurrentUser() user: any,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '20',
+  ) {
+    const data = await this.usersService.getNotifications(user.id, parseInt(page), parseInt(limit));
+    return { success: true, data };
+  }
+
+  @Post('notifications/:id/read')
+  @UseGuards(JwtAuthGuard)
+  async markNotificationRead(@CurrentUser() user: any, @Param('id') id: string) {
+    await this.usersService.markNotificationRead(id, user.id);
+    return { success: true };
+  }
+
+  @Post('notifications/read-all')
+  @UseGuards(JwtAuthGuard)
+  async markAllNotificationsRead(@CurrentUser() user: any) {
+    await this.usersService.markAllNotificationsRead(user.id);
+    return { success: true };
+  }
+
   @Get('all')
   @UseGuards(JwtAuthGuard)
   async getAllUsers(

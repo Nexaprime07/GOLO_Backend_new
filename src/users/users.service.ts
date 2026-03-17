@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { User, UserDocument, UserRole } from './schemas/user.schema';
+import { Notification, NotificationDocument } from './schemas/notification.schema';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { SocialAuthDto } from './dto/social-auth.dto';
@@ -24,6 +25,7 @@ export class UsersService {
 
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Notification.name) private notificationModel: Model<NotificationDocument>,
     private jwtService: JwtService,
     private readonly auditLogsService: AuditLogsService,
     private configService: ConfigService,
@@ -791,7 +793,59 @@ export class UsersService {
     }
 
     await this.userModel.findByIdAndUpdate(userId, { wishlist }).exec();
+
+    // Create notification for the ad owner when someone adds to wishlist
+    if (added && this.adsService) {
+      try {
+        const ad = await this.adsService.getAdById(adId);
+        const adOwnerId = (ad as any).userId?.toString();
+        if (adOwnerId && adOwnerId !== userId) {
+          await this.notificationModel.create({
+            recipientId: adOwnerId,
+            senderId: userId,
+            senderName: user.name,
+            adId,
+            adTitle: (ad as any).title || 'your ad',
+            type: 'wishlist_add',
+            message: `${user.name} wishlisted your ad "${(ad as any).title || 'your ad'}"`,
+            read: false,
+          });
+        }
+      } catch (err) {
+        this.logger.warn(`Failed to create wishlist notification: ${err.message}`);
+      }
+    }
+
     return { wishlist, added };
+  }
+
+  async getNotifications(userId: string, page = 1, limit = 20): Promise<{ notifications: any[]; unreadCount: number }> {
+    const skip = (page - 1) * limit;
+    const [notifications, unreadCount] = await Promise.all([
+      this.notificationModel
+        .find({ recipientId: userId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.notificationModel.countDocuments({ recipientId: userId, read: false }),
+    ]);
+    return { notifications, unreadCount };
+  }
+
+  async markNotificationRead(notificationId: string, userId: string): Promise<void> {
+    await this.notificationModel.findOneAndUpdate(
+      { _id: notificationId, recipientId: userId },
+      { $set: { read: true } },
+    ).exec();
+  }
+
+  async markAllNotificationsRead(userId: string): Promise<void> {
+    await this.notificationModel.updateMany(
+      { recipientId: userId, read: false },
+      { $set: { read: true } },
+    ).exec();
   }
 
   async getWishlistIds(userId: string): Promise<string[]> {

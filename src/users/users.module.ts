@@ -6,13 +6,17 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { User, UserSchema } from './schemas/user.schema';
+import { Notification, NotificationSchema } from './schemas/notification.schema';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { KafkaModule } from '../kafka/kafka.module';
 import { AdsModule } from 'src/ads/ads.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Notification.name, schema: NotificationSchema },
+    ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

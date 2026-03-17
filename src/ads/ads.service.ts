@@ -928,10 +928,25 @@ export class AdsService implements OnModuleInit, OnModuleDestroy {
       );
     }
 
+    const currentEditCount = typeof (ad as any).editCount === 'number' ? (ad as any).editCount : 0;
+    const hasUsedEdit = Boolean((ad as any).hasUsedEdit) || currentEditCount >= 1;
+
+    if (hasUsedEdit) {
+      throw new ForbiddenException('You can edit an ad only once');
+    }
+
     const updatedAd = await this.adModel
       .findOneAndUpdate(
         { adId },
-        { $set: { ...updateData, updatedAt: new Date() } },
+        {
+          $set: {
+            ...updateData,
+            updatedAt: new Date(),
+            hasUsedEdit: true,
+            editedAt: new Date(),
+          },
+          $inc: { editCount: 1 },
+        },
         { new: true },
       )
       .exec();
