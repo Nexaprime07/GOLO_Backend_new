@@ -5,6 +5,7 @@ export type UserDocument = User & Document;
 
 export enum UserRole {
   USER = 'customer',
+  MERCHANT = 'merchant',
   ADMIN = 'admin'
 }
 
@@ -24,6 +25,9 @@ export class User {
 
   @Prop({ required: true, enum: UserRole, default: UserRole.USER })
   role: UserRole;
+
+  @Prop({ enum: ['user', 'merchant'], default: 'user' })
+  accountType: 'user' | 'merchant';
 
   @Prop({ default: false })
   isEmailVerified: boolean;

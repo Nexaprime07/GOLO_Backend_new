@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { User, UserDocument, UserRole } from './schemas/user.schema';
 import { Notification, NotificationDocument } from './schemas/notification.schema';
+import { Merchant, MerchantDocument } from './schemas/merchant.schema';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { SocialAuthDto } from './dto/social-auth.dto';
@@ -26,6 +27,7 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Notification.name) private notificationModel: Model<NotificationDocument>,
+    @InjectModel(Merchant.name) private merchantModel: Model<MerchantDocument>,
     private jwtService: JwtService,
     private readonly auditLogsService: AuditLogsService,
     private configService: ConfigService,
@@ -73,12 +75,28 @@ export class UsersService {
     const adminEmail = this.configService.get<string>('ADMIN_EMAIL');
     const isSystemAdmin = adminEmail && registerDto.email.toLowerCase() === adminEmail.toLowerCase();
 
-    // Create user (Admin if matches config, else USER)
+    const accountType = registerDto.accountType === 'merchant' ? 'merchant' : 'user';
+
+    if (accountType === 'merchant') {
+      if (!registerDto.storeName?.trim()) {
+        throw new BadRequestException('Store name is required for merchant registration');
+      }
+      if (!registerDto.storeEmail?.trim()) {
+        throw new BadRequestException('Store email is required for merchant registration');
+      }
+    }
+
+    const assignedRole = isSystemAdmin
+      ? UserRole.ADMIN
+      : (accountType === 'merchant' ? UserRole.MERCHANT : UserRole.USER);
+
+    // Create user (Admin if matches config, else based on account type)
     const user = new this.userModel({
       name: registerDto.name,
       email: registerDto.email,
       password: hashedPassword,
-      role: isSystemAdmin ? UserRole.ADMIN : UserRole.USER,
+      role: assignedRole,
+      accountType,
       profile: {
         phone: registerDto.phone,
       },
@@ -89,6 +107,18 @@ export class UsersService {
     });
 
     const savedUser = await user.save();
+
+    if (accountType === 'merchant') {
+      await this.merchantModel.create({
+        userId: savedUser._id.toString(),
+        storeName: registerDto.storeName?.trim(),
+        storeEmail: registerDto.storeEmail?.trim() || registerDto.email,
+        gstNumber: registerDto.gstNumber?.trim() || undefined,
+        contactNumber: registerDto.contactNumber?.trim() || registerDto.phone,
+        storeLocation: registerDto.storeLocation?.trim() || undefined,
+        status: 'active',
+      });
+    }
 
     // Emit Kafka event
     if (this.kafkaService) {
@@ -123,6 +153,15 @@ export class UsersService {
     if (user.isBanned) {
       this.logger.warn(`Login failed - user is banned: ${loginDto.email}`);
       throw new ForbiddenException(`Your account has been banned. Reason: ${user.banReason || 'No reason provided'}`);
+    }
+
+    if (loginDto.accountType === 'merchant' && user.accountType !== 'merchant') {
+      throw new UnauthorizedException('Merchant account not found for this email');
+    }
+
+    if (user.accountType === 'merchant' && user.role !== UserRole.ADMIN && user.role !== UserRole.MERCHANT) {
+      user.role = UserRole.MERCHANT;
+      await user.save();
     }
 
     // Auto-promote to admin if email matches config
@@ -166,10 +205,14 @@ export class UsersService {
 
     this.logger.log(`Login successful: ${user.email}`);
 
+    const merchantProfile = user.accountType === 'merchant'
+      ? await this.merchantModel.findOne({ userId: user._id.toString() }).lean().exec()
+      : null;
+
     return {
       accessToken,
       refreshToken,
-      user: this.toResponseDto(user),
+      user: this.toResponseDto(user, merchantProfile),
     };
   }
 
@@ -308,7 +351,22 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return this.toResponseDto(user);
+    const merchantProfile = user.accountType === 'merchant'
+      ? await this.merchantModel.findOne({ userId: user._id.toString() }).lean().exec()
+      : null;
+    return this.toResponseDto(user, merchantProfile);
+  }
+
+  async getMerchantProfile(userId: string): Promise<any> {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) throw new NotFoundException('User not found');
+    if (user.accountType !== 'merchant') {
+      throw new ForbiddenException('Merchant access required');
+    }
+
+    const merchant = await this.merchantModel.findOne({ userId: user._id.toString() }).lean().exec();
+    if (!merchant) throw new NotFoundException('Merchant profile not found');
+    return merchant;
   }
 
   async updateProfile(userId: string, updateData: any): Promise<UserResponseDto> {
@@ -936,16 +994,22 @@ export class UsersService {
 
   // ==================== HELPER METHODS ====================
 
-  private toResponseDto(user: UserDocument): UserResponseDto {
+  private toResponseDto(user: UserDocument, merchantProfile: any = null): UserResponseDto {
+    const normalizedRole = user.role === UserRole.ADMIN
+      ? UserRole.ADMIN
+      : (user.accountType === 'merchant' ? UserRole.MERCHANT : user.role || UserRole.USER);
+
     return {
       id: user._id.toString(),
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: normalizedRole,
+      accountType: user.accountType || 'user',
       isBanned: user.isBanned || false,
       banReason: user.banReason,
       isEmailVerified: user.isEmailVerified || false,
       profile: user.profile || {},
+      merchantProfile,
       iWantPreference: user.iWantPreference || null,
       createdAt: user.createdAt,
     };

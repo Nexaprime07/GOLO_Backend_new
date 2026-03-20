@@ -1196,23 +1196,12 @@ async testKafka() {
   /**
    * Keep this dynamic GET route near the bottom so static routes always win.
    */
-  @UseGuards(JwtAuthGuard)
   @Get(':adId')
-  async getAdById(@Param('adId') adId: string, @CurrentUser() user?: any) {
+  async getAdById(@Param('adId') adId: string) {
     this.logger.log(`REST: Getting ad by ID: ${adId}`);
 
     try {
       const ad = await this.adsService.getAdById(adId);
-
-      // Track view ONLY if user is authenticated
-      if (user?.id) {
-        this.logger.log(`✓ Authenticated user ${user.id} viewing ad ${adId} - tracking view`);
-        this.adsService.trackViewWithVisitor(adId, user.id).catch(error => {
-          this.logger.error(`Error tracking view: ${error.message}`);
-        });
-      } else {
-        this.logger.warn(`⚠ Anonymous view of ad ${adId} - not tracked (auth-only tracking)`);
-      }
 
       return {
         success: true,

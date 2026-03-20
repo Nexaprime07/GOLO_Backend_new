@@ -7,6 +7,7 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { User, UserSchema } from './schemas/user.schema';
 import { Notification, NotificationSchema } from './schemas/notification.schema';
+import { Merchant, MerchantSchema } from './schemas/merchant.schema';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { KafkaModule } from '../kafka/kafka.module';
 import { AdsModule } from 'src/ads/ads.module';
@@ -16,6 +17,7 @@ import { AdsModule } from 'src/ads/ads.module';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Notification.name, schema: NotificationSchema },
+      { name: Merchant.name, schema: MerchantSchema },
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({

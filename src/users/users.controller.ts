@@ -81,6 +81,16 @@ export class UsersController {
     };
   }
 
+  @Get('merchant/profile')
+  @UseGuards(JwtAuthGuard)
+  async getMerchantProfile(@CurrentUser() user: any) {
+    const data = await this.usersService.getMerchantProfile(user.id);
+    return {
+      success: true,
+      data,
+    };
+  }
+
   @Put('profile')
   @UseGuards(JwtAuthGuard)
   async updateProfile(@CurrentUser() user: any, @Body() updateData: any) {
