@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as dotenv from 'dotenv';
+import { json, urlencoded } from 'express';
 
 dotenv.config();
 
@@ -64,6 +65,11 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule, { rawBody: true });
   const configService = app.get(ConfigService);
+
+  // Allow larger payloads for banner image submissions (base64 data URLs).
+  app.use(json({ limit: '15mb' }));
+  app.use(urlencoded({ extended: true, limit: '15mb' }));
+
   app.useGlobalPipes(validationPipe);
 
   const corsOrigins = configService.get<string[]>('config.cors.origins') || [];
