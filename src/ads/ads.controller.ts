@@ -20,26 +20,27 @@ import { Optional } from '@nestjs/common';
 
 @Controller('ads')
 export class AdsController {
-    /**
-     * Admin: Get real-time listing report stats for admin panel cards
-     */
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(UserRole.ADMIN)
-    @Get('reports/stats')
-    async getListingReportStats() {
-      // Real-time stats for admin panel cards
-      const stats = await this.adsService.getReportStats();
-      return {
-        success: true,
-        data: stats
-      };
-    }
   private readonly logger = new Logger(AdsController.name);
 
   constructor(
     private readonly adsService: AdsService,
     @Optional() private readonly kafkaService?: KafkaService
   ) { }
+
+  /**
+   * Admin: Get real-time listing report stats for admin panel cards
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get('reports/stats')
+  async getListingReportStats() {
+    // Real-time stats for admin panel cards
+    const stats = await this.adsService.getReportStats();
+    return {
+      success: true,
+      data: stats
+    };
+  }
 
   // ==================== PUBLIC ROUTES (No Auth Required) ====================
 
@@ -756,20 +757,6 @@ export class AdsController {
     }
   }
 
-  // src/ads/ads.controller.ts
-@Get('test-kafka')
-async testKafka() {
-  try {
-    const result = await this.kafkaService.emit('test-topic', {
-      message: 'Hello from GOLO Backend!',
-      timestamp: new Date().toISOString()
-    });
-    return { success: true, message: 'Kafka message sent', result };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-}
-
   /**
    * Delete ad via Kafka (async) - Authenticated users only
    */
@@ -778,7 +765,7 @@ async testKafka() {
   @UseGuards(JwtAuthGuard)
   async deleteAdAsync(
     @Param('adId') adId: string,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ) {
     this.logger.log(`REST: Sending async delete request for ad: ${adId}`);
 
@@ -793,16 +780,17 @@ async testKafka() {
         };
       }
 
-      await this.kafkaService.send(KAFKA_TOPICS.AD_DELETE, {
-        adId,
-        userId: user.id
-      }, correlationId);
+      await this.kafkaService.send(
+        KAFKA_TOPICS.AD_DELETE,
+        { adId, userId: user.id },
+        correlationId,
+      );
 
       return {
         success: true,
         message: 'Ad delete request submitted successfully',
         correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       this.logger.error(`REST: Error sending async delete: ${error.message}`);
@@ -812,8 +800,31 @@ async testKafka() {
         message: 'Failed to submit ad delete request',
         error: error.message,
         correlationId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
+    }
+  }
+
+  @Get('test-kafka')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async testKafka() {
+    const correlationId = uuidv4();
+
+    try {
+      if (!this.kafkaService) {
+        return { success: false, message: 'Kafka is disabled on server' };
+      }
+
+      await this.kafkaService.emit(
+        'test-topic',
+        { message: 'Hello from GOLO Backend!' },
+        correlationId,
+      );
+
+      return { success: true, message: 'Kafka message emitted', correlationId };
+    } catch (error) {
+      return { success: false, error: error.message, correlationId };
     }
   }
 
@@ -1092,10 +1103,10 @@ async testKafka() {
   }
 
   @Get('home/featured')
-  async getFeaturedDeals(@Query('limit') limit: string = '10') {
+  async getFeaturedDeals(@Query('limit') limit?: string) {
     this.logger.log('Fetching featured deals for home screen');
     try {
-      const limitNum = parseInt(limit, 10);
+      const limitNum = parseInt(limit || '10', 10);
       const deals = await this.adsService.getFeaturedDeals(limitNum);
       return { success: true, data: deals };
     } catch (error) {
@@ -1105,10 +1116,10 @@ async testKafka() {
   }
 
   @Get('home/trending')
-  async getTrendingSearches(@Query('limit') limit: string = '10') {
+  async getTrendingSearches(@Query('limit') limit?: string) {
     this.logger.log('Fetching trending searches');
     try {
-      const limitNum = parseInt(limit, 10);
+      const limitNum = parseInt(limit || '10', 10);
       const trending = await this.adsService.getTrendingSearches(limitNum);
       return { success: true, data: trending };
     } catch (error) {
@@ -1118,10 +1129,10 @@ async testKafka() {
   }
 
   @Get('home/recommended')
-  async getRecommendedDeals(@CurrentUser() user: any, @Query('limit') limit: string = '10') {
+  async getRecommendedDeals(@CurrentUser() user: any, @Query('limit') limit?: string) {
     this.logger.log('Fetching recommended deals');
     try {
-      const limitNum = parseInt(limit, 10);
+      const limitNum = parseInt(limit || '10', 10);
       const userId = user?.id;
       const deals = await this.adsService.getRecommendedDeals(userId, limitNum);
       return { success: true, data: deals };
@@ -1132,10 +1143,10 @@ async testKafka() {
   }
 
   @Get('home/popular-places')
-  async getPopularPlaces(@Query('limit') limit: string = '10') {
+  async getPopularPlaces(@Query('limit') limit?: string) {
     this.logger.log('Fetching popular places');
     try {
-      const limitNum = parseInt(limit, 10);
+      const limitNum = parseInt(limit || '10', 10);
       const places = await this.adsService.getPopularPlaces(limitNum);
       return { success: true, data: places };
     } catch (error) {

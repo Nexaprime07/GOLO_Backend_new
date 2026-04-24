@@ -58,14 +58,23 @@ export class AdsService implements OnModuleInit, OnModuleDestroy {
           }
         },
         {
-          $lookup: {
-            from: 'users',
-            let: { adUserObjectId: '$adUserObjectId' },
-            pipeline: [
-              { $match: { $expr: { $eq: ['$_id', '$$adUserObjectId'] } } },
-            ],
-            as: 'uploader',
-          },
+         $lookup: {
+             from: 'users',
+             let: { adUserObjectId: '$adUserObjectId' },
+             pipeline: [
+               { 
+                 $match: { 
+                   $expr: { 
+                     $and: [
+                       { $eq: ['$_id', '$$adUserObjectId'] },
+                       { $in: ['$_id', [{ $toObjectId: '$_id' }]] }
+                     ]
+                   } 
+                 } 
+               },
+             ],
+             as: 'uploader',
+           },
         },
         { $unwind: { path: '$uploader', preserveNullAndEmptyArrays: true } },
         // Always set uploader.userId from uploader._id if uploader exists
@@ -1196,57 +1205,75 @@ export class AdsService implements OnModuleInit, OnModuleDestroy {
      ✅ SAFE KAFKA EVENTS (PUBLIC NOW)
   ============================================================ */
 
-  async emitAdCreated(ad: Ad, correlationId: string): Promise<void> {
-    if (!this.kafkaService) {
-      this.logger.warn('Kafka disabled - AD_CREATED skipped');
-      return;
-    }
+   async emitAdCreated(ad: Ad, correlationId: string): Promise<void> {
+     if (!this.kafkaService) {
+       this.logger.debug('Kafka disabled - AD_CREATED event not emitted');
+       return;
+     }
 
-    await this.kafkaService.emit(
-      KAFKA_TOPICS.AD_CREATED,
-      {
-        adId: ad.adId,
-        userId: ad.userId,
-        title: ad.title,
-        category: ad.category,
-        price: ad.price,
-        timestamp: new Date().toISOString(),
-      },
-      correlationId,
-    );
-  }
+     try {
+       await this.kafkaService.emit(
+         KAFKA_TOPICS.AD_CREATED,
+         {
+           adId: ad.adId,
+           userId: ad.userId,
+           title: ad.title,
+           category: ad.category,
+           price: ad.price,
+           timestamp: new Date().toISOString(),
+         },
+         correlationId,
+       );
+     } catch (error) {
+       this.logger.error(`Failed to emit AD_CREATED event: ${error.message}`);
+     }
+   }
 
-  async emitAdUpdated(ad: Ad, correlationId: string): Promise<void> {
-    if (!this.kafkaService) return;
+   async emitAdUpdated(ad: Ad, correlationId: string): Promise<void> {
+     if (!this.kafkaService) {
+       this.logger.debug('Kafka disabled - AD_UPDATED event not emitted');
+       return;
+     }
 
-    await this.kafkaService.emit(
-      KAFKA_TOPICS.AD_UPDATED,
-      {
-        adId: ad.adId,
-        userId: ad.userId,
-        timestamp: new Date().toISOString(),
-      },
-      correlationId,
-    );
-  }
+     try {
+       await this.kafkaService.emit(
+         KAFKA_TOPICS.AD_UPDATED,
+         {
+           adId: ad.adId,
+           userId: ad.userId,
+           timestamp: new Date().toISOString(),
+         },
+         correlationId,
+       );
+     } catch (error) {
+       this.logger.error(`Failed to emit AD_UPDATED event: ${error.message}`);
+     }
+   }
 
-  async emitAdDeleted(
-    adId: string,
-    userId: string,
-    correlationId: string,
-  ): Promise<void> {
-    if (!this.kafkaService) return;
+   async emitAdDeleted(
+     adId: string,
+     userId: string,
+     correlationId: string,
+   ): Promise<void> {
+     if (!this.kafkaService) {
+       this.logger.debug('Kafka disabled - AD_DELETED event not emitted');
+       return;
+     }
 
-    await this.kafkaService.emit(
-      KAFKA_TOPICS.AD_DELETED,
-      {
-        adId,
-        userId,
-        timestamp: new Date().toISOString(),
-      },
-      correlationId,
-    );
-  }
+     try {
+       await this.kafkaService.emit(
+         KAFKA_TOPICS.AD_DELETED,
+         {
+           adId,
+           userId,
+           timestamp: new Date().toISOString(),
+         },
+         correlationId,
+       );
+     } catch (error) {
+       this.logger.error(`Failed to emit AD_DELETED event: ${error.message}`);
+     }
+   }
 
   /* ============================================================
      REPORTING & MODERATION

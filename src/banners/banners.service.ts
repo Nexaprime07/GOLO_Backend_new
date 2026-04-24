@@ -223,11 +223,16 @@ export class BannersService implements OnModuleInit {
       );
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (normalizedDates[0] < today) {
+    const todayUtc = new Date();
+    todayUtc.setUTCHours(0, 0, 0, 0);
+    if (normalizedDates[0] < todayUtc) {
       throw new BadRequestException('Selected dates cannot be in the past');
     }
+
+    const startDate = new Date(normalizedDates[0]);
+    startDate.setUTCHours(0, 0, 0, 0);
+    const endDate = new Date(normalizedDates[normalizedDates.length - 1]);
+    endDate.setUTCHours(23, 59, 59, 999);
 
     const selectedDays = normalizedDates.length;
     const dailyRate = Number(payload.dailyRate ?? 240);
@@ -258,8 +263,8 @@ export class BannersService implements OnModuleInit {
       imageUrl: payload.imageUrl,
       recommendedSize: payload.recommendedSize || '1920 x 520 px',
       selectedDates: normalizedDates,
-      startDate: normalizedDates[0],
-      endDate: normalizedDates[normalizedDates.length - 1],
+      startDate,
+      endDate,
       selectedDays,
       dailyRate,
       platformFee,
@@ -503,8 +508,12 @@ export class BannersService implements OnModuleInit {
       }
 
       request.selectedDates = normalizedDates;
-      request.startDate = normalizedDates[0];
-      request.endDate = normalizedDates[normalizedDates.length - 1];
+      const startDate = new Date(normalizedDates[0]);
+      startDate.setUTCHours(0, 0, 0, 0);
+      const endDate = new Date(normalizedDates[normalizedDates.length - 1]);
+      endDate.setUTCHours(23, 59, 59, 999);
+      request.startDate = startDate;
+      request.endDate = endDate;
       request.selectedDays = normalizedDates.length;
       request.totalPrice =
         request.dailyRate * request.selectedDays + request.platformFee;
