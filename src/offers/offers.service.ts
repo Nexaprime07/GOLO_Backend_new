@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleInit, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, isValidObjectId, Types } from 'mongoose';
+import { Model, isValidObjectId } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { KafkaService } from '../kafka/kafka.service';
 import { RedisService } from '../common/services/redis.service';
@@ -13,33 +13,6 @@ import { KAFKA_TOPICS } from '../common/constants/kafka-topics';
 @Injectable()
 export class OffersService implements OnModuleInit {
   private readonly logger = new Logger(OffersService.name);
-  private staleOfferIndexRecoveryAttempted = false;
-
-  private isAllowedUniqueOfferIndex(indexDef: any): boolean {
-    const name = String(indexDef?.name || '');
-    if (name === '_id_') return true;
-
-    const key = indexDef?.key || {};
-    const keyNames = Object.keys(key);
-    return keyNames.length === 1 && keyNames[0] === 'requestId';
-  }
-
-  private async cleanupUnexpectedUniqueOfferIndexes(trigger: string): Promise<number> {
-    const indexes = await this.offerModel.collection.indexes();
-    const staleUniqueIndexes = indexes.filter((idx: any) => {
-      if (!idx?.unique) return false;
-      return !this.isAllowedUniqueOfferIndex(idx);
-    });
-
-    for (const indexDef of staleUniqueIndexes) {
-      const indexName = indexDef?.name;
-      if (!indexName) continue;
-      await this.offerModel.collection.dropIndex(indexName);
-      this.logger.warn(`[Offers] Dropped unexpected unique index (${trigger}): ${indexName}`);
-    }
-
-    return staleUniqueIndexes.length;
-  }
 
   constructor(
     @InjectModel(OfferPromotion.name) private readonly offerModel: Model<OfferPromotionDocument>,
@@ -64,58 +37,6 @@ export class OffersService implements OnModuleInit {
     'combo',
     'clearance',
   ]);
-
-  /**
-   * Get merchant's offers sorted by likes/wishlist count
-   * Used for analytics "Product Liked" section
-   * Returns customer details for each like
-   */
-  async getMerchantLikedOffers(merchantId: string, limit = 10): Promise<any[]> {
-    this.logger.log(`Getting liked offers for merchant: ${merchantId}`);
-
-    // Get all approved and active offers for this merchant
-    const offers = await this.offerModel.find({
-      merchantId: merchantId,
-      status: { $in: [OfferPromotionStatus.APPROVED, OfferPromotionStatus.ACTIVE] },
-    }).lean().exec();
-
-    this.logger.log(`Found ${offers?.length || 0} approved/active offers for merchant ${merchantId}`);
-
-    if (!offers || offers.length === 0) {
-      return [];
-    }
-
-    // Get wishlist details for each offer (which users liked it)
-    const offersWithLikes = await Promise.all(
-      offers.map(async (offer) => {
-        const offerId = (offer as any).requestId?.toString() || '';
-        
-        // Find users who liked this offer
-        const usersWhoLiked = await this.userModel.find({
-          wishlist: { $in: [offerId] },
-        }).select('name email').lean().exec();
-
-        const customerNames = usersWhoLiked.map(u => u.name || 'Anonymous').join(', ');
-        
-        this.logger.log(`Offer ${offer.title}: ${usersWhoLiked.length} likes - Customers: ${customerNames}`);
-
-        return {
-          name: offer.title || 'Untitled Offer',
-          type: offer.category || 'General',
-          likes: usersWhoLiked.length,
-          image: (offer as any).imageUrl || '',
-          offerId: offerId,
-          customers: customerNames || 'No customers yet',
-          customerCount: usersWhoLiked.length,
-        };
-      })
-    );
-
-    // Sort by likes count descending and limit
-    return offersWithLikes
-      .sort((a, b) => b.likes - a.likes)
-      .slice(0, limit);
-  }
 
   private toRadians(value: number): number {
     return (value * Math.PI) / 180;
@@ -175,27 +96,20 @@ export class OffersService implements OnModuleInit {
 
   async onModuleInit() {
     try {
-      await this.cleanupUnexpectedUniqueOfferIndexes('startup');
+      const indexes = await this.offerModel.collection.indexes();
+      const staleIdempotencyIndexes = indexes.filter((idx: any) => {
+        const keys = Object.keys(idx?.key || {});
+        return keys.includes('idempotencyKey');
+      });
+
+      for (const indexDef of staleIdempotencyIndexes) {
+        const indexName = indexDef?.name;
+        if (!indexName) continue;
+        await this.offerModel.collection.dropIndex(indexName);
+        this.logger.warn(`[Offers] Dropped legacy index on startup: ${indexName}`);
+      }
     } catch (error) {
       this.logger.warn(`[Offers] Index cleanup skipped: ${error?.message || 'unknown error'}`);
-    }
-  }
-
-  private async recoverFromDuplicateOfferIndex(error: any): Promise<boolean> {
-    if (this.staleOfferIndexRecoveryAttempted) return false;
-
-    const message = String(error?.message || '');
-    const isDuplicate = Number(error?.code) === 11000 || /E11000/i.test(message);
-    if (!isDuplicate) return false;
-
-    this.staleOfferIndexRecoveryAttempted = true;
-
-    try {
-      const dropped = await this.cleanupUnexpectedUniqueOfferIndexes('duplicate-recovery');
-      return dropped > 0;
-    } catch (dropError) {
-      this.logger.error(`[Offers] Failed to recover stale index: ${dropError?.message || 'unknown error'}`);
-      return false;
     }
   }
 
@@ -237,9 +151,8 @@ export class OffersService implements OnModuleInit {
     const platformFee = Number(payload.platformFee ?? (selectedDays > 0 ? 49 : 0));
     const computedTotal = dailyRate * selectedDays + platformFee;
 
-    const requestDocument = {
+    const request = await this.offerModel.create({
       requestId: uuidv4(),
-      idempotencyKey: uuidv4(),
       merchantId,
       merchantName: merchant.name || 'Merchant',
       merchantEmail: merchant.email || '-',
@@ -267,16 +180,7 @@ export class OffersService implements OnModuleInit {
       status: OfferPromotionStatus.UNDER_REVIEW,
       paymentStatus: OfferPaymentStatus.PENDING,
       isActive: false,
-    };
-
-    let request;
-    try {
-      request = await this.offerModel.create(requestDocument);
-    } catch (createError) {
-      const recovered = await this.recoverFromDuplicateOfferIndex(createError);
-      if (!recovered) throw createError;
-      request = await this.offerModel.create(requestDocument);
-    }
+    });
 
     if (this.kafkaService) {
       try {
