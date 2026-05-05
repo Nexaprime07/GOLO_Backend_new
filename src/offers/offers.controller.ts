@@ -104,6 +104,9 @@ export class OffersController {
     @Query('category') category?: string,
     @Query('sort') sort?: string,
     @Query('maxPrice') maxPrice?: string,
+    @Query('offerTypes') offerTypes?: string,
+    @Query('topDiscount') topDiscount?: string,
+    @Query('activeNow') activeNow?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -116,6 +119,9 @@ export class OffersController {
       category,
       sort,
       maxPrice: maxPrice ? Number(maxPrice) : undefined,
+      offerTypes: offerTypes || undefined,
+      topDiscount: topDiscount === 'true' || topDiscount === '1',
+      activeNow: activeNow === 'false' ? false : true,
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
     };

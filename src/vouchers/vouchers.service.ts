@@ -980,7 +980,32 @@ if (!offerResult) {
         }
       }
 
-      await this.recordMerchantRedemption(String(actualMerchantId || offerMerchantId || voucher.merchantId));
+      // Normalize merchant identifier to merchant userId (some rows use profile _id)
+      const resolveMerchantUserId = async (candidateId?: string) => {
+        if (!candidateId) return null;
+        try {
+          // If candidateId is a profile ObjectId, find profile.userId
+          if (isValidObjectId(candidateId)) {
+            const profile = await this.merchantModel.findById(candidateId).select('userId').lean().exec();
+            if (profile?.userId) return String(profile.userId);
+          }
+
+          // Try to find merchant profile by userId field
+          const profile2 = await this.merchantModel.findOne({ userId: candidateId }).select('userId').lean().exec();
+          if (profile2?.userId) return String(profile2.userId);
+
+          // Fallback: return the provided candidateId
+          return candidateId;
+        } catch (err) {
+          return candidateId;
+        }
+      };
+
+      const candidate = String(actualMerchantId || offerMerchantId || voucher.merchantId || '');
+      const merchantUserId = (await resolveMerchantUserId(candidate)) || candidate;
+
+      // Record redemption using normalized merchant user id so dashboard (which reads by user id) sees it
+      await this.recordMerchantRedemption(String(merchantUserId));
 
       // Get user details (after update)
       const user = await this.userModel.findById(voucher.userId).select('name email loyaltyPoints merchantLoyaltyPoints');

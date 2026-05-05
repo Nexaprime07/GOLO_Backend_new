@@ -274,7 +274,15 @@ export class OffersService implements OnModuleInit {
   }
 
   async listMerchantOffers(merchantId: string) {
-    const rows = await this.offerModel.find({ merchantId }).sort({ createdAt: -1 }).lean().exec();
+    // Support both merchant userId and legacy merchant profile _id stored in some rows
+    const merchantProfile = await this.merchantModel.findOne({ userId: merchantId }).select('_id').lean().exec();
+    const profileId = merchantProfile?._id ? String(merchantProfile._id) : null;
+
+    const query: any = profileId
+      ? { $or: [{ merchantId: merchantId }, { merchantId: profileId }] }
+      : { merchantId: merchantId };
+
+    const rows = await this.offerModel.find(query).sort({ createdAt: -1 }).lean().exec();
     return rows.map((row) => this.normalizeMerchantOfferRow(row));
   }
 
@@ -457,6 +465,9 @@ export class OffersService implements OnModuleInit {
     category?: string;
     sort?: string;
     maxPrice?: number;
+    offerTypes?: string | undefined;
+    topDiscount?: boolean | undefined;
+    activeNow?: boolean | undefined;
     page?: number;
     limit?: number;
   }) {
@@ -465,16 +476,52 @@ export class OffersService implements OnModuleInit {
     const prefetchLimit = Math.min(300, Math.max(120, safeLimit * 8));
     const safeRadiusKm = Math.min(100, Math.max(1, Number(params.radiusKm) || 5));
     const locationNeedle = String(params.location || '').trim().toLowerCase();
+    const locationTokens = locationNeedle
+      .split(/[\s,]+/)
+      .map((token) => token.trim())
+      .filter((token) => token.length >= 3);
     const queryNeedle = String(params.query || '').trim().toLowerCase();
     const categoryNeedle = String(params.category || '').trim().toLowerCase();
     const sortBy = String(params.sort || '').trim().toLowerCase();
     const maxPrice = Number(params.maxPrice);
+    const offerTypesRaw = String(params.offerTypes || '').trim();
+    const offerTypeTokens = offerTypesRaw
+      ? offerTypesRaw
+          .split(/[,\|;]+/)
+          .map((t) => String(t || '').trim().toLowerCase())
+          .filter(Boolean)
+      : [];
+    const topDiscountOnly = Boolean(params.topDiscount);
+    const activeNowOnly = params.activeNow === undefined ? true : Boolean(params.activeNow);
 
     const hasUserCoordinates =
       typeof params.latitude === 'number' &&
       !Number.isNaN(params.latitude) &&
       typeof params.longitude === 'number' &&
       !Number.isNaN(params.longitude);
+
+    const locationMatchesAddress = (addressValue: string) => {
+      const address = String(addressValue || '').toLowerCase();
+      if (!locationNeedle) return true;
+      if (address.includes(locationNeedle) || locationNeedle.includes(address)) return true;
+      return locationTokens.some((token) => address.includes(token));
+    };
+
+    const matchOfferTypes = (row: any) => {
+      if (!offerTypeTokens.length) return true;
+      const title = String(row?.title || '').toLowerCase();
+      const category = String(row?.category || '').toLowerCase();
+      const blob = `${title} ${category}`;
+
+      return offerTypeTokens.some((t) => {
+        if (!t) return false;
+        if (category === t) return true;
+        if (t === 'flat discount') return blob.includes('flat') || blob.includes('discount');
+        if (t.includes('bogo') || t.includes('buy one get')) return blob.includes('bogo') || blob.includes('buy 1 get 1') || blob.includes('buy one get one');
+        if (t === 'percentage off' || t.includes('percent') || t.includes('%')) return blob.includes('%') || blob.includes('percent') || blob.includes('percentage');
+        return blob.includes(t);
+      });
+    };
 
     let offerRows: any[] = [];
     try {
@@ -567,7 +614,9 @@ export class OffersService implements OnModuleInit {
       });
 
       // Only show offers that are within the visibility window (startDate <= now <= endDate).
-      normalized = normalized.filter((row) => row.isActiveNow);
+      if (activeNowOnly) {
+        normalized = normalized.filter((row) => row.isActiveNow);
+      }
 
       if (queryNeedle) {
         normalized = normalized.filter((row) => {
@@ -578,6 +627,14 @@ export class OffersService implements OnModuleInit {
 
       if (categoryNeedle) {
         normalized = normalized.filter((row) => String(row.category || '').toLowerCase() === categoryNeedle);
+      }
+
+      if (offerTypeTokens.length) {
+        normalized = normalized.filter((row) => matchOfferTypes(row));
+      }
+
+      if (topDiscountOnly) {
+        normalized = normalized.filter((row) => Number(row.discountPercent || 0) >= 30);
       }
 
       if (!Number.isNaN(maxPrice) && maxPrice > 0) {
@@ -642,20 +699,21 @@ export class OffersService implements OnModuleInit {
     });
 
     // Only show offers that are within the visibility window (startDate <= now <= endDate).
-    normalized = normalized.filter((row) => row.isActiveNow);
+    if (activeNowOnly) {
+      normalized = normalized.filter((row) => row.isActiveNow);
+    }
 
-    if (hasUserCoordinates) {
+    if (hasUserCoordinates && !locationNeedle) {
       normalized = normalized.filter((row) => {
         if (row.distanceKm === null) {
-          if (locationNeedle) {
-            return String(row.merchant.address || '').toLowerCase().includes(locationNeedle);
-          }
           return true;
         }
         return row.distanceKm <= safeRadiusKm;
       });
-    } else if (locationNeedle) {
-      normalized = normalized.filter((row) => String(row.merchant.address || '').toLowerCase().includes(locationNeedle));
+    }
+
+    if (locationNeedle) {
+      normalized = normalized.filter((row) => locationMatchesAddress(row.merchant.address || ''));
     }
 
     if (queryNeedle) {
@@ -667,6 +725,14 @@ export class OffersService implements OnModuleInit {
 
     if (categoryNeedle) {
       normalized = normalized.filter((row) => String(row.category || '').toLowerCase() === categoryNeedle);
+    }
+
+    if (offerTypeTokens.length) {
+      normalized = normalized.filter((row) => matchOfferTypes(row));
+    }
+
+    if (topDiscountOnly) {
+      normalized = normalized.filter((row) => Number(row.discountPercent || 0) >= 30);
     }
 
     if (!Number.isNaN(maxPrice) && maxPrice > 0) {
